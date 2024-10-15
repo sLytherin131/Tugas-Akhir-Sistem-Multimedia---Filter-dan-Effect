@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image and Video Filtering App</title>
+    <link rel="stylesheet" href="{{ url_for('css') }}">
+    <style>
+        .container {
+            text-align: center;
+        }
+        .media-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .media-preview video, .media-preview img {
+            max-width: 300px;
+        }
+        .download-button {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image and Video Filtering App</h1>
+        <form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
+            <label for="file">Choose an image or video:</label>
+            <input type="file" name="file" id="file" {{ 'required' if not previous_file }} onchange="previewMedia(event)">
+            <input type="hidden" name="previous_file" id="previous_file" value="{{ previous_file }}">
+
+            <label for="filter_type">Select filter type:</label>
+            <select name="filter_type" id="filter_type" required>
+                <option value="noise">Noise Reduction</option>
+                <option value="effect">Effect Filter</option>
+            </select>
+            
+            <div id="noise_options" style="display: none;">
+                <label for="noise_type">Select noise reduction type:</label>
+                <select name="noise_type" id="noise_type">
+                    <option value="gaussian">Gaussian Reduction</option>
+                    <option value="salt_and_pepper">Salt & Pepper Reduction</option>
+                    <option value="speckle">Speckle Reduction</option>
+                    <option value="poisson">Poisson Reduction</option>
+                </select>
+            </div>
+            
+            <div id="effect_options" style="display: none;">
+                <label for="effect_type">Select effect type:</label>
+                <select name="effect_type" id="effect_type">
+                    <option value="sepia">Sepia</option>
+                    <option value="bw">Black & White</option>
+                    <option value="vintage">Vintage</option>
+                    <option value="dramatic">Dramatic</option>
+                </select>
+            </div>
+
+            <button type="submit">Process Media</button>
+        </form>
+        
+        <div class="media-container">
+            {% if previous_file %}
+                <div class="media-preview">
+                    <h2>Uploaded Media:</h2>
+                    {% if previous_file.endswith(('.mp4', '.avi')) %}
+                        <video id="uploadedMedia" controls>
+                            <source src="{{ url_for('static', filename='uploads/' + previous_file) }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% else %}
+                        <img id="uploadedMedia" src="{{ url_for('static', filename='uploads/' + previous_file) }}" alt="Previous Media">
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="media-preview" style="display: none;">
+                    <h2>Uploaded Media:</h2>
+                    <img id="uploadedMedia" src="#" alt="Previous Media">
+                </div>
+            {% endif %}
+            
+            {% if processed_file %}
+                <div class="media-preview">
+                    <h2>Processed Media:</h2>
+                    {% if processed_file.endswith(('.mp4', '.avi')) %}
+                        <video controls>
+                            <source src="{{ url_for('static', filename='uploads/' + processed_file) }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + processed_file) }}" alt="Processed Media">
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        {% if processed_file %}
+            <div class="download-button">
+                <a href="{{ url_for('static', filename='uploads/' + processed_file) }}" download>
+                    <button>Download Processed Media</button>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        document.getElementById('filter_type').addEventListener('change', function() {
+            var effectOptions = document.getElementById('effect_options');
+            var noiseOptions = document.getElementById('noise_options');
+            if (this.value === 'effect') {
+                effectOptions.style.display = 'block';
+                noiseOptions.style.display = 'none';
+            } else {
+                effectOptions.style.display = 'none';
+                noiseOptions.style.display = 'block';
+            }
+        });
+
+        window.onload = function() {
+            var previousFile = document.getElementById('previous_file').value;
+            if (previousFile) {
+                document.getElementById('file').removeAttribute('required');
+            }
+        }
+
+        function previewMedia(event) {
+            var output = document.getElementById('uploadedMedia');
+            output.src = URL.createObjectURL(event.target.files[0]);
+            document.querySelector('.media-preview').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
